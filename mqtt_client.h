@@ -13,3 +13,12 @@
 
 /* Get Opt long. */
 #include <getopt.h>
+
+/* Can add options here. */
+#define OPTIONS "dhp:s:"
+
+/* Functions Declarations. */
+void daemonize ( char *, int );
+void on_connect (struct mosquitto *, void *, int);
+void on_publish (struct mosquitto *, void *, int);
+void on_message (struct mosquitto *, void *, const struct mosquitto_message *);

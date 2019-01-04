@@ -1,0 +1,19 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+CC	./Makefile	/^CC=gcc$/;"	m
+CC_FLAGS	./Makefile	/^CC_FLAGS = -g -I.$/;"	m
+EXEC	./Makefile	/^EXEC = client $/;"	m
+HEADERS	./Makefile	/^HEADERS = $(wildcard *.h)$/;"	m
+LD_FLAGS	./Makefile	/^LD_FLAGS = -lmosquitto$/;"	m
+OBJECTS	./Makefile	/^OBJECTS = $(SOURCES:.c=.o)$/;"	m
+SOURCES	./Makefile	/^SOURCES = $(wildcard *.c)$/;"	m
+daemonize	./mqtt_client.c	/^void daemonize (void )$/;"	f
+default_client	./mqtt_client.c	/^void default_client (void) $/;"	f
+main	./mqtt_client.c	/^void main(int argc, char **argv) $/;"	f
+on_connect	./mqtt_client.c	/^void on_connect (struct mosquitto *clnt_inst, void *obj, int ret) {$/;"	f
+on_message	./mqtt_client.c	/^void on_message (struct mosquitto *clnt_inst, void *obj, const struct mosquitto_message *msg) {$/;"	f
+on_publish	./mqtt_client.c	/^void on_publish (struct mosquitto *clnt_inst, void *obj, int ret) {$/;"	f

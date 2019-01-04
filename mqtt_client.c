@@ -51,91 +51,7 @@ void on_message (struct mosquitto *clnt_inst, void *obj, const struct mosquitto_
 	}
 }
 
-void daemonize (void )
-{
-	pid_t PID, SID;
-	FILE *LOG_FILE;
-
-    int ret, qos=1;
-	char *id = "NETCONF";
-
-    // true to tell the boker to clean all messages on disconnect
-	// false to keep them under function mosquitto_new
-	bool clean_session = true;
-
-	int major=0, minor=0, revision=0;
-	struct mosquitto *clnt_inst = NULL;
-	struct mosq_config *cfg = NULL;
-
-	/* Library Versioning */	
-	ret = mosquitto_lib_version( &major, &minor, &revision);
-
-	printf("Mosquitto Library Version : %d.%d.%d\n", major, minor, revision);
-   
-    /* Library Initialization */
-	ret = mosquitto_lib_init();
-	if (ret == MOSQ_ERR_SUCCESS) {
-
-	    /* Actual CLIENT Instance */
-		clnt_inst = mosquitto_new ( id, clean_session, NULL);
-
-		mosquitto_connect_callback_set ( clnt_inst, on_connect);
-		mosquitto_message_callback_set ( clnt_inst, on_message);
-
-		ret = mosquitto_connect (clnt_inst, "localhost", 1883, 100);
-		if (ret == MOSQ_ERR_SUCCESS) {
-			printf("Connect call SUCCESS.\n");	
-			printf("Connected waiting for Published Messages \n");
-			ret = mosquitto_subscribe(clnt_inst, NULL, id, qos);
-			if (ret == MOSQ_ERR_SUCCESS)
-				printf("Subscribe.\n");
-		} else if (ret == MOSQ_ERR_INVAL) {
-			printf("Connect call invalid parameters.\n");	
-			return;
-		} else if (ret == MOSQ_ERR_ERRNO) {
-			printf("Connect call ERROR.\n");	
-			return;
-		}
-
-	}
-
-	PID = fork();
-
-	if (PID > 0) {exit (EXIT_SUCCESS);}
-	if (PID < 0) {exit (EXIT_FAILURE);}
-
-	umask(0);
-	
-	if ((SID=setsid()) < 0) {
-		syslog (LOG_INFO, "SHUBH: FAILED SETSID");
-		exit (EXIT_FAILURE);
-	}
-
- 	if (chdir("/") < 0) {
-		syslog (LOG_INFO,"SHUBH: FAILED CHDIR");
-		exit (EXIT_FAILURE);
-	}
-
-	close (STDIN_FILENO);
-	close (STDOUT_FILENO);
-	close (STDERR_FILENO);
-
-	syslog (LOG_INFO, "MOSQUITTO CLIENT DAEMONIZING.");
-	ret = mosquitto_loop_forever (clnt_inst, -1, 1);
-		
-    /* Destroy the CLIENT Instance */
-	mosquitto_destroy (clnt_inst);			
-
-	/* Library Clean-up */
-	ret = mosquitto_lib_cleanup();
-	if (ret == MOSQ_ERR_SUCCESS) {
-		return;
-	}
-
-	exit (EXIT_SUCCESS);
-}
-
-void default_client (void) 
+void default_client ( char *server, int port) 
 {
     int ret, qos=1;
 	char *id = "RESTCONF";
@@ -152,6 +68,7 @@ void default_client (void)
 	ret = mosquitto_lib_version( &major, &minor, &revision);
 
 	printf("Mosquitto Library Version : %d.%d.%d\n", major, minor, revision);
+	printf("Will connect over server : %s , port : %d\n", server, port);
 
     /* Library Initialization */
 	ret = mosquitto_lib_init();
@@ -165,7 +82,8 @@ void default_client (void)
 		mosquitto_publish_callback_set ( clnt_inst, on_publish);
 
 		//ret = mosquitto_connect ( clnt_inst, "localhost", 1883, 100);
-		ret = mosquitto_connect ( clnt_inst, "172.16.1.105", 1883, 100);
+		//ret = mosquitto_connect ( clnt_inst, "172.16.1.105", 1887, 100);
+		ret = mosquitto_connect ( clnt_inst, server, port, 100);
 		if (ret == MOSQ_ERR_SUCCESS) {
 			printf ("Connect call SUCCESS.\n");
 			printf ("Connected waiting for Published Messages \n");
@@ -198,35 +116,64 @@ void default_client (void)
 	}
 
 }
+void usage () {
+
+    printf("This is mosquitto based MQTT client including puablisher & subscriber.\n"); 
+    printf("Usage :\n\t-d -\tDaemonize the process\n"
+                   "\t-h -\tprint this help\n"
+                   "\t-p -\tPort to connect to, default is 1883\n"
+                   "\t-s -\tServer to connect to\n");
+}
 
 void main(int argc, char **argv) 
 {
-	int opt;
-	char *options = "hd";     // Can add options here.
+	int opt, daemon_flag=0;
+	int port=0;
+	char *server = NULL;
 
-    while(opt != -1)
+    //while((opt) != -1)
+    while((opt = getopt(argc, argv, OPTIONS)) != -1)
 	{
-		opt = getopt(argc, argv, options);
+		//opt = getopt(argc, argv, options);
 		switch (opt) {
-		case'h': 
-			printf("Subscriber MQTT client.\n");
-			printf("Options ::\t-h : help.\n");
-			printf("\t\t-d : Daemonize the process.\n");
-			return;
 		case'd':
 			printf("Daemonizing this program.\n");
-            daemonize ();
-			return;
+			daemon_flag=1;
+            //daemonize ();
+			break;
+		case'h':
+			usage ();
+			exit (EXIT_FAILURE);
+		case'p':
+			port = atoi(optarg);
+			if ( port < 1024) {
+				printf ("Port Should not be less than 1024. Exiting...\n");	
+				exit (EXIT_FAILURE);
+			}
+			break;
+		case's': 
+			server = strdup(optarg); 
+			break;
 		case'?':
-			printf("Invalid option. Need some help.\n");
-			printf("Subscriber MQTT client.\n");
-			printf("Options ::\t-h : help.\n");
-			printf("\t\t-d : Daemonize the process.\n");
-			return;
+			printf("Invalid option, check usage...\n");
+			usage ();
+			exit (EXIT_FAILURE);
         default : 
-            default_client ();
-			return;
+			printf("Default case, check usage...\n");
+			usage ();
+			exit (EXIT_FAILURE);
 		}
+	}
+
+	if ( (server != NULL) && (port != 0)) {
+		if (!daemon_flag) {
+			default_client ( server, port);
+		} else {
+			//daemonize ( server, port);
+		}
+	} else {
+		printf("No server address provided. Exiting...");
+		exit (EXIT_FAILURE);
 	}
 
 	return;
