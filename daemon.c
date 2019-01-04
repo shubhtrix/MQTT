@@ -6,7 +6,7 @@ void daemonize ( char *server, int port)
 	FILE *LOG_FILE;
 
     int ret, qos=1;
-	char *id = "NETCONF";
+	char *id = "RESTCONF";
 
     // true to tell the boker to clean all messages on disconnect
 	// false to keep them under function mosquitto_new
@@ -20,6 +20,8 @@ void daemonize ( char *server, int port)
 	ret = mosquitto_lib_version( &major, &minor, &revision);
 
 	printf("Mosquitto Library Version : %d.%d.%d\n", major, minor, revision);
+	syslog (LOG_INFO, "MOSQUITTO WILL CONNECT OVER SERVER : %s, port : %d\n",
+					server, port);
    
     /* Library Initialization */
 	ret = mosquitto_lib_init();
@@ -31,7 +33,7 @@ void daemonize ( char *server, int port)
 		mosquitto_connect_callback_set ( clnt_inst, on_connect);
 		mosquitto_message_callback_set ( clnt_inst, on_message);
 
-		ret = mosquitto_connect (clnt_inst, "localhost", 1883, 100);
+		ret = mosquitto_connect (clnt_inst, server, port, 100);
 		if (ret == MOSQ_ERR_SUCCESS) {
 			printf("Connect call SUCCESS.\n");	
 			printf("Connected waiting for Published Messages \n");
@@ -45,7 +47,6 @@ void daemonize ( char *server, int port)
 			printf("Connect call ERROR.\n");	
 			return;
 		}
-
 	}
 
 	PID = fork();

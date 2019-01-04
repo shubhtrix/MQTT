@@ -28,7 +28,6 @@ void on_message (struct mosquitto *clnt_inst, void *obj, const struct mosquitto_
 
 	if (msg->payloadlen) {
 		
-		//post_obj = (char *)malloc(sizeof(char)*101);
 		post_obj = (char *)malloc(sizeof(int)*(msg->payloadlen));
 		memset( post_obj, '\0', strlen( post_obj));
 		
@@ -36,7 +35,7 @@ void on_message (struct mosquitto *clnt_inst, void *obj, const struct mosquitto_
 			   	(char *)msg->payload);	
 		printf("Data to post to clixon :Length %ld\t%s\n", strlen(post_obj), post_obj);	
 
-		//syslog (LOG_INFO, "POSTED DATA :: %s", post_obj);
+		syslog (LOG_INFO, "POSTED DATA :: %s", post_obj);
 		
 		memset( post_obj, '\0', strlen( post_obj));
 		sprintf( post_obj, "Data receieved successfully.");	
@@ -82,7 +81,6 @@ void default_client ( char *server, int port)
 		mosquitto_publish_callback_set ( clnt_inst, on_publish);
 
 		//ret = mosquitto_connect ( clnt_inst, "localhost", 1883, 100);
-		//ret = mosquitto_connect ( clnt_inst, "172.16.1.105", 1887, 100);
 		ret = mosquitto_connect ( clnt_inst, server, port, 100);
 		if (ret == MOSQ_ERR_SUCCESS) {
 			printf ("Connect call SUCCESS.\n");
@@ -169,7 +167,7 @@ void main(int argc, char **argv)
 		if (!daemon_flag) {
 			default_client ( server, port);
 		} else {
-			//daemonize ( server, port);
+			daemonize ( server, port);
 		}
 	} else {
 		printf("No server address provided. Exiting...");
