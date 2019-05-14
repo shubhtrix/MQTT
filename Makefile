@@ -1,12 +1,12 @@
-all: client 
+all: conf-mqtt
 
 #install :
 #	cp ./client ${TARGET_DIR}/bin/
 
 CC=gcc
 CC_FLAGS = -g -I.
-LD_FLAGS = -lmosquitto
-EXEC = client 
+LD_FLAGS = -lmosquitto -lpthread -ljansson -lcurl
+EXEC = conf-mqtt
 SOURCES = $(wildcard *.c)
 HEADERS = $(wildcard *.h)
 OBJECTS = $(SOURCES:.c=.o)
